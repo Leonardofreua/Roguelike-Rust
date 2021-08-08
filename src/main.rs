@@ -16,6 +16,9 @@ struct Renderable {
     bg: RGB,
 }
 
+#[derive(Component, Debug)]
+struct Player {}
+
 #[derive(Component)]
 struct LeftMover {}
 
@@ -48,11 +51,6 @@ fn player_input(gs: &mut State, ctx: &mut Rltk) {
         },
     }
 }
-
-#[derive(Component, Debug)]
-struct Player {}
-
-
 
 impl GameState for State {
     fn tick(&mut self, ctx : &mut Rltk) {
