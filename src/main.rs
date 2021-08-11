@@ -5,10 +5,12 @@ mod components;
 mod constants;
 mod player;
 mod map;
+mod rect;
 
 pub use constants::COORDINATE_79;
 pub use components::{Position, Renderable, LeftMover, Player};
-pub use map::{new_map, draw_map, get_index_xy, TileType};
+pub use map::{new_map_rooms_and_corridors, draw_map, get_index_xy, TileType};
+pub use rect::Rect;
 use player::player_input;
 
 struct LeftWalker {}
@@ -75,12 +77,14 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Player>();
     
     // Set a new map
-    gs.ecs.insert(new_map());
+    let (rooms, map) = new_map_rooms_and_corridors();
+    gs.ecs.insert(map);
+    let (player_x, player_y) = rooms[0].center();
 
     // Creating Player entity
     gs.ecs
         .create_entity()
-        .with(Position { x: 40, y: 25 })
+        .with(Position { x: player_x, y: player_y })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
