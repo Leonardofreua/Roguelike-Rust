@@ -9,7 +9,7 @@ mod rect;
 
 pub use constants::COORDINATE_79;
 pub use components::{Position, Renderable, LeftMover, Player};
-pub use map::{new_map_rooms_and_corridors, draw_map, get_index_xy, TileType};
+pub use map::{Map, TileType, draw_map};
 pub use rect::Rect;
 use player::player_input;
 
@@ -19,6 +19,14 @@ pub struct State {
     ecs: World
 }
 
+impl State {
+    fn run_systems(&mut self) {
+        let mut left_walker = LeftWalker{};
+        left_walker.run_now(&self.ecs);
+        self.ecs.maintain();
+    }
+}
+
 impl GameState for State {
     fn tick(&mut self, ctx : &mut Rltk) {
         ctx.cls();
@@ -26,8 +34,7 @@ impl GameState for State {
         player_input(self, ctx);
         self.run_systems();
 
-        let map = self.ecs.fetch::<Vec<TileType>>();
-        draw_map(&map, ctx);
+        draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
         let renderables = self.ecs.read_storage::<Renderable>();
@@ -35,14 +42,6 @@ impl GameState for State {
         for (pos, render) in (&positions, &renderables).join() {
             ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
         }
-    }
-}
-
-impl State {
-    fn run_systems(&mut self) {
-        let mut left_walker = LeftWalker{};
-        left_walker.run_now(&self.ecs);
-        self.ecs.maintain();
     }
 }
 
@@ -77,9 +76,9 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Player>();
     
     // Set a new map
-    let (rooms, map) = new_map_rooms_and_corridors();
+    let map: Map = Map::new_map_rooms_and_corridors();
+    let (player_x, player_y) = map.rooms[0].center();
     gs.ecs.insert(map);
-    let (player_x, player_y) = rooms[0].center();
 
     // Creating Player entity
     gs.ecs
