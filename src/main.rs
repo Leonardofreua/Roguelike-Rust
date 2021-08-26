@@ -6,14 +6,14 @@ mod constants;
 mod player;
 mod map;
 mod rect;
+mod visibility_system;
 
-pub use constants::COORDINATE_79;
-pub use components::{Position, Renderable, LeftMover, Player};
+pub use constants::{COORDINATE_79, VISIBLE_TILES_RANGE};
+pub use components::{Position, Renderable, LeftMover, Player, Viewshed};
 pub use map::{Map, TileType, draw_map};
 pub use rect::Rect;
 use player::player_input;
-
-struct LeftWalker {}
+use visibility_system::VisibilitySystem;
 
 pub struct State {
     ecs: World
@@ -21,8 +21,8 @@ pub struct State {
 
 impl State {
     fn run_systems(&mut self) {
-        let mut left_walker = LeftWalker{};
-        left_walker.run_now(&self.ecs);
+        let mut visibility = VisibilitySystem{};
+        visibility.run_now(&self.ecs);
         self.ecs.maintain();
     }
 }
@@ -45,20 +45,6 @@ impl GameState for State {
     }
 }
 
-impl<'a> System<'a> for LeftWalker {
-    type SystemData = (
-        ReadStorage<'a, LeftMover>,
-        WriteStorage<'a, Position>
-    );
-
-    fn run(&mut self, (lefty, mut pos) : Self::SystemData) {
-        for (_lefty, pos) in (&lefty, &mut pos).join() {
-            pos.x -= 1;
-            if pos.x < 0 { pos.x = COORDINATE_79; }
-        }
-    }
-}
-
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
 
@@ -74,9 +60,10 @@ fn main() -> rltk::BError {
     gs.ecs.register::<Renderable>();
     gs.ecs.register::<LeftMover>();
     gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
     
     // Set a new map
-    let map: Map = Map::new_map_rooms_and_corridors();
+    let map: Map = Map::new_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
     gs.ecs.insert(map);
 
@@ -90,6 +77,7 @@ fn main() -> rltk::BError {
             bg: RGB::named(rltk::BLACK),
         })
         .with(Player{})
+        .with(Viewshed{ visible_tiles: Vec::new(), range: VISIBLE_TILES_RANGE, dirty: true })
         .build();
 
     rltk::main_loop(context, gs)

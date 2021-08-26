@@ -5,7 +5,8 @@ use std::cmp::{max, min};
 
 use crate::constants::{
   COORDINATE_79,
-  MAP_FLOOR_DIMENSION,
+  WIDTH,
+  HEIGHT,
   MAX_ROOMS,
   MAX_SIZE_ROOM,
   MIN_SIZE_ROOM
@@ -42,7 +43,9 @@ impl Map {
   fn apply_horizontal_tunnel(&mut self, x1: i32, x2: i32, y: i32) {
     for x in min(x1, x2) ..= max(x1, x2) {
       let index = self.get_index_xy(x, y);
-      if index > 0 && index < MAP_FLOOR_DIMENSION {
+
+      let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
+      if index > 0 && index < map_floor_dimension {
         self.tiles[index as usize] = TileType::Floor;
       }
     }
@@ -51,7 +54,8 @@ impl Map {
   fn apply_vertical_tunnel(&mut self, y1: i32, y2: i32, x: i32) {
     for y in min(y1, y2) ..= max(y1, y2) {
       let index = self.get_index_xy(x, y);
-      if index > 0 && index < MAP_FLOOR_DIMENSION {
+      let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
+      if index > 0 && index < map_floor_dimension {
         self.tiles[index as usize] = TileType::Floor;
       }
     }
@@ -72,14 +76,15 @@ impl Map {
     }
   }
 
-  pub fn new_map_rooms_and_corridors() -> Map {
+  pub fn new_rooms_and_corridors() -> Map {
+    let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
     let mut map = Map{
-        tiles : vec![TileType::Wall; 80*50],
+        tiles : vec![TileType::Wall; map_floor_dimension],
         rooms : Vec::new(),
-        width : 80,
-        height: 50,
-        revealed_tiles : vec![false; 80*50],
-        visible_tiles : vec![false; 80*50]
+        width : WIDTH,
+        height: HEIGHT,
+        revealed_tiles : vec![false; map_floor_dimension],
+        visible_tiles : vec![false; map_floor_dimension]
     };
 
     let mut rng = RandomNumberGenerator::new();
@@ -125,31 +130,31 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
   let mut y = 0;
 
   for (index, tile) in map.tiles.iter().enumerate() {
-      // Render a tile depending upon the tile type
-      if map.revealed_tiles[index] {
-        let glyph;
-        let mut fg;
-        
-        match tile {
-          TileType::Floor => {
-              glyph = rltk::to_cp437('.');
-              fg = RGB::from_f32(0.0, 0.5, 0.5);
-          }
-          TileType::Wall => {
-              glyph = rltk::to_cp437('#');
-              fg = RGB::from_f32(0., 1.0, 0.);
-          }
+    // Render a tile depending upon the tile type
+    if map.revealed_tiles[index] {
+      let glyph;
+      let mut fg;
+      
+      match tile {
+        TileType::Floor => {
+            glyph = rltk::to_cp437('.');
+            fg = RGB::from_f32(0.0, 0.5, 0.5);
         }
-
-        if !map.visible_tiles[index] { fg = fg.to_greyscale() }
-        ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+        TileType::Wall => {
+            glyph = rltk::to_cp437('#');
+            fg = RGB::from_f32(0., 1.0, 0.);
+        }
       }
 
-      // Move the coordinates
-      x += 1;
-      if x > COORDINATE_79 {
-          x = 0;
-          y += 1;
-      }
+      if !map.visible_tiles[index] { fg = fg.to_greyscale() }
+      ctx.set(x, y, fg, RGB::from_f32(0., 0., 0.), glyph);
+    }
+
+    // Move the coordinates
+    x += 1;
+    if x > COORDINATE_79 {
+        x = 0;
+        y += 1;
+    }
   }
 }
