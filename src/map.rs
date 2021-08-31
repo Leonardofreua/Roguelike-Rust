@@ -8,7 +8,7 @@ use rltk::{
   SmallVec,
   DistanceAlg
 };
-use specs::prelude::{World};
+use specs::prelude::*;
 use super::{Rect};
 use std::cmp::{max, min};
 
@@ -33,7 +33,8 @@ pub struct Map {
   pub height: i32,
   pub revealed_tiles: Vec<bool>,
   pub visible_tiles: Vec<bool>,
-  pub blocked: Vec<bool>
+  pub blocked: Vec<bool>,
+  pub tile_content : Vec<Vec<Entity>>
 }
 
 impl Map {
@@ -98,6 +99,12 @@ impl Map {
     }
   }
 
+  pub fn clear_content_index(&mut self) {
+    for content in self.tile_content.iter_mut() {
+      content.clear();
+    }
+  }
+
   pub fn new_rooms_and_corridors() -> Map {
     let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
     let mut map = Map{
@@ -107,7 +114,8 @@ impl Map {
         height: HEIGHT,
         revealed_tiles : vec![false; map_floor_dimension],
         visible_tiles : vec![false; map_floor_dimension],
-        blocked: vec![false; map_floor_dimension]
+        blocked: vec![false; map_floor_dimension],
+        tile_content : vec![Vec::new(); map_floor_dimension]
     };
 
     let mut rng = RandomNumberGenerator::new();

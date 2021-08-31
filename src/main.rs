@@ -9,24 +9,19 @@ mod rect;
 mod visibility_system;
 mod monster_ai_system;
 mod map_indexing_system;
+mod melee_combat_system;
+mod damage_system;
 
 pub use constants::{COORDINATE_79, VISIBLE_TILES_RANGE};
-pub use components::{
-    Position,
-    Renderable,
-    LeftMover,
-    Player,
-    Viewshed,
-    Monster,
-    Name,
-    BlocksTile,
-};
+pub use components::*;
 pub use map::{Map, TileType, draw_map};
 pub use rect::Rect;
 use player::player_input;
 use visibility_system::VisibilitySystem;
 use monster_ai_system::MonsterAI;
 use map_indexing_system::MapIndexingSystem;
+use melee_combat_system::MeleeCombatSystem;
+use damage_system::DamageSystem;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState { Paused, Running }
@@ -47,6 +42,12 @@ impl State {
         let mut mapindex = MapIndexingSystem{};
         mapindex.run_now(&self.ecs);
 
+        let mut melee_combat = MeleeCombatSystem{};
+        melee_combat.run_now(&self.ecs);
+
+        let mut damage = DamageSystem{};
+        damage.run_now(&self.ecs);
+
         self.ecs.maintain();
     }
 }
@@ -62,6 +63,7 @@ impl GameState for State {
             self.runstate = player_input(self, ctx);
         }
 
+        damage_system::delete_the_dead(&mut self.ecs);
         draw_map(&self.ecs, ctx);
 
         let positions = self.ecs.read_storage::<Position>();
@@ -77,6 +79,20 @@ impl GameState for State {
     }
 }
 
+fn register_components(gs: &mut State) {
+    gs.ecs.register::<Position>();
+    gs.ecs.register::<Renderable>();
+    gs.ecs.register::<LeftMover>();
+    gs.ecs.register::<Player>();
+    gs.ecs.register::<Viewshed>();
+    gs.ecs.register::<Monster>();
+    gs.ecs.register::<Name>();
+    gs.ecs.register::<BlocksTile>();
+    gs.ecs.register::<CombatStats>();
+    gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<SufferDamage>();
+}
+
 fn main() -> rltk::BError {
     use rltk::RltkBuilder;
 
@@ -88,15 +104,7 @@ fn main() -> rltk::BError {
         runstate: RunState::Running,
     };
 
-    // Registering the components
-    gs.ecs.register::<Position>();
-    gs.ecs.register::<Renderable>();
-    gs.ecs.register::<LeftMover>();
-    gs.ecs.register::<Player>();
-    gs.ecs.register::<Viewshed>();
-    gs.ecs.register::<Monster>();
-    gs.ecs.register::<Name>();
-    gs.ecs.register::<BlocksTile>();
+    register_components(&mut gs);
 
     // Set a new map
     let map: Map = Map::new_rooms_and_corridors();
@@ -126,6 +134,7 @@ fn main() -> rltk::BError {
             .with(Monster{})
             .with(Name{ name: format!("{} #{}", &name, i) })
             .with(BlocksTile{})
+            .with(CombatStats{ max_hp: 16, hp: 16, defense: 1, power: 4 })
             .build();
     }
 
@@ -144,6 +153,7 @@ fn main() -> rltk::BError {
         .with(Player{})
         .with(Viewshed{ visible_tiles: Vec::new(), range: VISIBLE_TILES_RANGE, dirty: true })
         .with(Name{ name: "Player".to_owned() })
+        .with(CombatStats{ max_hp: 30, hp: 30, defense: 2, power: 5 })
         .build();
 
     rltk::main_loop(context, gs)

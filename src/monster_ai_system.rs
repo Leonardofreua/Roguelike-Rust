@@ -24,17 +24,17 @@ impl<'a> System<'a> for MonsterAI {
         return;
       }
       if viewshed.visible_tiles.contains(&*player_pos) {
-          console::log(&format!("{} shouts insults", name.name));
-          let path = rltk::a_star_search(
-            map.get_index_xy(pos.x, pos.y) as i32,
-            map.get_index_xy(player_pos.x, player_pos.y) as i32,
-            &mut *map
-          );
-          if path.success && path.steps.len() > 1 {
-            pos.x = path.steps[1] as i32 % map.width;
-            pos.y = path.steps[1] as i32 / map.width;
-            viewshed.dirty = true;
-          }
+        console::log(&format!("{} shouts insults", name.name));
+        let path = rltk::a_star_search(
+          map.get_index_xy(pos.x, pos.y) as i32,
+          map.get_index_xy(player_pos.x, player_pos.y) as i32,
+          &mut *map
+        );
+        if path.success && path.steps.len() > 1 {
+          pos.x = path.steps[1] as i32 % map.width;
+          pos.y = path.steps[1] as i32 / map.width;
+          viewshed.dirty = true;
+        }
       }
     }
   }
