@@ -1,6 +1,6 @@
 use specs::prelude::*;
-use super::{Viewshed, Monster, Name, Map, Position};
-use rltk::{Point, console};
+use super::{Viewshed, Monster, Map, Position, WantsToMelee, RunState};
+use rltk::Point;
 
 pub struct MonsterAI {}
 
@@ -8,32 +8,48 @@ impl<'a> System<'a> for MonsterAI {
   #[allow(clippy::type_complexity)]
   type SystemData = (WriteExpect<'a, Map>,
                      ReadExpect<'a, Point>,
+                     ReadExpect<'a, Entity>,
+                     ReadExpect<'a, RunState>,
+                     Entities<'a>,
                      WriteStorage<'a, Viewshed>,
                      ReadStorage<'a, Monster>,
-                     ReadStorage<'a, Name>,
-                     WriteStorage<'a, Position>);
+                     WriteStorage<'a, Position>,
+                     WriteStorage<'a, WantsToMelee>);
 
   fn run(&mut self, data: Self::SystemData) {
-    let (mut map, player_pos, mut viewshed, monster, name, mut position) = data;
+    let (
+      mut map,
+      player_pos,
+      player_entity,
+      runstate,
+      entities,
+      mut viewshed,
+      monster,
+      mut position,
+      mut wants_to_melee) = data;
 
-    for (mut viewshed, _monster, name, mut pos) in (&mut viewshed, &monster, &name, &mut position).join() {
-      let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
-      if distance < 1.5 {
-        // Attack goes here
-        console::log(&format!("{} shouts insults", name.name));
-        return;
-      }
-      if viewshed.visible_tiles.contains(&*player_pos) {
-        console::log(&format!("{} shouts insults", name.name));
-        let path = rltk::a_star_search(
-          map.get_index_xy(pos.x, pos.y) as i32,
-          map.get_index_xy(player_pos.x, player_pos.y) as i32,
-          &mut *map
-        );
-        if path.success && path.steps.len() > 1 {
-          pos.x = path.steps[1] as i32 % map.width;
-          pos.y = path.steps[1] as i32 / map.width;
-          viewshed.dirty = true;
+    if *runstate == RunState::MonsterTurn {
+      for (entity, mut viewshed,_monster,mut pos) in (&entities, &mut viewshed, &monster, &mut position).join() {
+        let distance = rltk::DistanceAlg::Pythagoras.distance2d(Point::new(pos.x, pos.y), *player_pos);
+  
+        if distance < 1.5 {
+          wants_to_melee.insert(entity, WantsToMelee { target: *player_entity }).expect("Unable to insert attack");
+        } else if viewshed.visible_tiles.contains(&*player_pos) {
+          // Path to the player
+          let path = rltk::a_star_search(
+            map.get_index_xy(pos.x, pos.y),
+            map.get_index_xy(player_pos.x, player_pos.y),
+            &mut *map
+          );
+          if path.success && path.steps.len() > 1 {
+            let mut index = map.get_index_xy(pos.x, pos.y);
+            map.blocked[index] = false;
+            pos.x = path.steps[1] as i32 % map.width;
+            pos.y = path.steps[1] as i32 / map.width;
+            index = map.get_index_xy(pos.x, pos.y);
+            map.blocked[index] = true;
+            viewshed.dirty = true;
+          }
         }
       }
     }
