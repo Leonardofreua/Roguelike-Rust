@@ -13,9 +13,10 @@ use super::{Rect};
 use std::cmp::{max, min};
 
 use crate::constants::{
-  COORDINATE_79,
-  WIDTH,
-  HEIGHT,
+  COORDINATE_X,
+  MAP_WIDTH,
+  MAP_HEIGHT,
+  MAP_TOTAL_DIMENSION,
   MAX_ROOMS,
   MAX_SIZE_ROOM,
   MIN_SIZE_ROOM
@@ -55,8 +56,7 @@ impl Map {
     for x in min(x1, x2) ..= max(x1, x2) {
       let index = self.get_index_xy(x, y);
 
-      let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
-      if index > 0 && index < map_floor_dimension {
+      if index > 0 && index < MAP_TOTAL_DIMENSION {
         self.tiles[index as usize] = TileType::Floor;
       }
     }
@@ -65,8 +65,7 @@ impl Map {
   fn apply_vertical_tunnel(&mut self, y1: i32, y2: i32, x: i32) {
     for y in min(y1, y2) ..= max(y1, y2) {
       let index = self.get_index_xy(x, y);
-      let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
-      if index > 0 && index < map_floor_dimension {
+      if index > 0 && index < MAP_TOTAL_DIMENSION {
         self.tiles[index as usize] = TileType::Floor;
       }
     }
@@ -106,16 +105,15 @@ impl Map {
   }
 
   pub fn new_rooms_and_corridors() -> Map {
-    let map_floor_dimension: usize = (WIDTH*HEIGHT) as usize;
     let mut map = Map{
-        tiles : vec![TileType::Wall; map_floor_dimension],
+        tiles : vec![TileType::Wall; MAP_TOTAL_DIMENSION],
         rooms : Vec::new(),
-        width : WIDTH,
-        height: HEIGHT,
-        revealed_tiles : vec![false; map_floor_dimension],
-        visible_tiles : vec![false; map_floor_dimension],
-        blocked: vec![false; map_floor_dimension],
-        tile_content : vec![Vec::new(); map_floor_dimension]
+        width : MAP_WIDTH as i32,
+        height: MAP_HEIGHT as i32,
+        revealed_tiles : vec![false; MAP_TOTAL_DIMENSION],
+        visible_tiles : vec![false; MAP_TOTAL_DIMENSION],
+        blocked: vec![false; MAP_TOTAL_DIMENSION],
+        tile_content : vec![Vec::new(); MAP_TOTAL_DIMENSION]
     };
 
     let mut rng = RandomNumberGenerator::new();
@@ -211,7 +209,7 @@ pub fn draw_map(ecs: &World, ctx: &mut Rltk) {
 
     // Move the coordinates
     x += 1;
-    if x > COORDINATE_79 {
+    if x > COORDINATE_X {
         x = 0;
         y += 1;
     }

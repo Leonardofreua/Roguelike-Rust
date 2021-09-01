@@ -13,7 +13,7 @@ use super::{
   WantsToMelee
 };
 
-use crate::constants::{COORDINATE_49, COORDINATE_79};
+use crate::constants::{COORDINATE_Y, COORDINATE_X};
 
 pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
   let mut positions = ecs.write_storage::<Position>();
@@ -41,8 +41,8 @@ pub fn try_move_player(delta_x: i32, delta_y: i32, ecs: &mut World) {
     }
 
     if !map.blocked[destination_index] {
-        pos.x = min(COORDINATE_79, max(0, sum_x_coordinates));
-        pos.y = min(COORDINATE_49, max(0, sum_y_coordinates));
+        pos.x = min(COORDINATE_X, max(0, sum_x_coordinates));
+        pos.y = min(COORDINATE_Y, max(0, sum_y_coordinates));
 
         viewshed.dirty = true;
         let mut ppos = ecs.write_resource::<Point>();

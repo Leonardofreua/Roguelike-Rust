@@ -13,7 +13,7 @@ mod melee_combat_system;
 mod damage_system;
 
 pub use components::*;
-pub use constants::{COORDINATE_79, VISIBLE_TILES_RANGE};
+pub use constants::{COORDINATE_X, VISIBLE_TILES_RANGE};
 pub use map::{Map, TileType, draw_map};
 pub use rect::Rect;
 use player::player_input;
