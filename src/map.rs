@@ -9,7 +9,7 @@ use rltk::{
   DistanceAlg
 };
 use specs::prelude::*;
-use super::{Rect};
+use super::Rect;
 use std::cmp::{max, min};
 
 use crate::constants::{

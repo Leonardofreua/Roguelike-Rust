@@ -11,6 +11,7 @@ mod monster_ai_system;
 mod map_indexing_system;
 mod melee_combat_system;
 mod damage_system;
+mod gui;
 
 pub use components::*;
 pub use constants::{COORDINATE_X, VISIBLE_TILES_RANGE};
@@ -97,6 +98,7 @@ impl GameState for State {
                 ctx.set(pos.x, pos.y, render.fg, render.bg, render.glyph);
             }
         }
+        gui::draw_ui(&self.ecs, ctx)
     }
 }
 
