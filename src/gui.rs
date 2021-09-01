@@ -1,8 +1,7 @@
-use std::fmt::format;
-
-use rltk::{ RGB, Rltk, Console };
+use rltk::{ RGB, Rltk };
 use specs::prelude::*;
-use super::{CombatStats, Player};
+
+use super::{CombatStats, Player, GameLog};
 
 pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
   ctx.draw_box(0, 43, 79, 6, RGB::named(rltk::WHITE), RGB::named(rltk::BLACK));
@@ -13,5 +12,12 @@ pub fn draw_ui(ecs: &World, ctx: &mut Rltk) {
     let health = format!("HP: {} / {}", stats.hp, stats.max_hp);
     ctx.print_color(12, 43, RGB::named(rltk::YELLOW), RGB::named(rltk::BLACK), &health);
     ctx.draw_bar_horizontal(28, 43, 51, stats.hp, stats.max_hp, RGB::named(rltk::RED), RGB::named(rltk::BLACK));
+  }
+
+  let log = ecs.fetch::<GameLog>();
+  let mut y = 44;
+  for s in log.entries.iter().rev() {
+      if y < 49 { ctx.print(2, y, s); }
+      y += 1;
   }
 }

@@ -12,6 +12,7 @@ mod map_indexing_system;
 mod melee_combat_system;
 mod damage_system;
 mod gui;
+mod gamelog;
 
 pub use components::*;
 pub use constants::{COORDINATE_X, VISIBLE_TILES_RANGE};
@@ -23,6 +24,7 @@ use monster_ai_system::MonsterAI;
 use map_indexing_system::MapIndexingSystem;
 use melee_combat_system::MeleeCombatSystem;
 use damage_system::DamageSystem;
+use gamelog::GameLog;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum RunState { AwaitingInput, PreRun, PlayerTurn, MonsterTurn }
@@ -176,6 +178,7 @@ fn main() -> rltk::BError {
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
+    gs.ecs.insert(GameLog{ entries: vec!["Welcome to Rusty Roguelike".to_string()] });
 
     rltk::main_loop(context, gs)
 }
