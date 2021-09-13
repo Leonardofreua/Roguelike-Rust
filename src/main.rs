@@ -6,6 +6,7 @@ mod constants;
 mod damage_system;
 mod gamelog;
 mod gui;
+mod inventory_system;
 mod map;
 mod map_indexing_system;
 mod melee_combat_system;
@@ -18,6 +19,7 @@ mod visibility_system;
 pub use components::*;
 use damage_system::DamageSystem;
 use gamelog::GameLog;
+use inventory_system::ItemCollectionSystem;
 pub use map::{draw_map, Map, TileType};
 use map_indexing_system::MapIndexingSystem;
 use melee_combat_system::MeleeCombatSystem;
@@ -54,6 +56,9 @@ impl State {
 
         let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
+
+        let mut pickup = ItemCollectionSystem {};
+        pickup.run_now(&self.ecs);
 
         self.ecs.maintain();
     }
@@ -122,6 +127,8 @@ fn register_components(gs: &mut State) {
     gs.ecs.register::<WantsToMelee>();
     gs.ecs.register::<Item>();
     gs.ecs.register::<Potion>();
+    gs.ecs.register::<InBackpack>();
+    gs.ecs.register::<WantsToPickupItem>();
     gs.ecs.register::<SufferDamage>();
 }
 
