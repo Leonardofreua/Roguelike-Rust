@@ -1,4 +1,4 @@
-use rltk::{GameState, Point, Rltk, RGB};
+use rltk::{GameState, Point, Rltk};
 use specs::prelude::*;
 
 mod components;
@@ -12,10 +12,10 @@ mod melee_combat_system;
 mod monster_ai_system;
 mod player;
 mod rect;
+mod spawner;
 mod visibility_system;
 
 pub use components::*;
-pub use constants::{COORDINATE_X, VISIBLE_TILES_RANGE};
 use damage_system::DamageSystem;
 use gamelog::GameLog;
 pub use map::{draw_map, Map, TileType};
@@ -138,80 +138,12 @@ fn main() -> rltk::BError {
     let map: Map = Map::new_rooms_and_corridors();
     let (player_x, player_y) = map.rooms[0].center();
 
-    let mut rng = rltk::RandomNumberGenerator::new();
-    for (i, room) in map.rooms.iter().skip(1).enumerate() {
-        let (x, y) = room.center();
+    let player_entity = spawner::player(&mut gs.ecs, player_x, player_y);
 
-        let glyph: rltk::FontCharType;
-        let name: String;
-        let roll = rng.roll_dice(1, 2);
-
-        match roll {
-            1 => {
-                glyph = rltk::to_cp437('g');
-                name = "Goblin".to_owned();
-            }
-            _ => {
-                glyph = rltk::to_cp437('o');
-                name = "Orc".to_owned();
-            }
-        }
-
-        gs.ecs
-            .create_entity()
-            .with(Position { x, y })
-            .with(Renderable {
-                glyph,
-                fg: RGB::named(rltk::RED),
-                bg: RGB::named(rltk::BLACK),
-            })
-            .with(Viewshed {
-                visible_tiles: Vec::new(),
-                range: VISIBLE_TILES_RANGE,
-                dirty: true,
-            })
-            .with(Monster {})
-            .with(Name {
-                name: format!("{} #{}", &name, i),
-            })
-            .with(BlocksTile {})
-            .with(CombatStats {
-                max_hp: 16,
-                hp: 16,
-                defense: 1,
-                power: 4,
-            })
-            .build();
+    gs.ecs.insert(rltk::RandomNumberGenerator::new());
+    for room in map.rooms.iter().skip(1) {
+        spawner::spawn_room(&mut gs.ecs, room);
     }
-
-    let player_entity = gs
-        .ecs
-        .create_entity()
-        .with(Position {
-            x: player_x,
-            y: player_y,
-        })
-        .with(Renderable {
-            glyph: rltk::to_cp437('@'),
-            fg: RGB::named(rltk::YELLOW),
-            bg: RGB::named(rltk::BLACK),
-        })
-        .with(Player {})
-        .with(Viewshed {
-            visible_tiles: Vec::new(),
-            range: VISIBLE_TILES_RANGE,
-            dirty: true,
-        })
-        .with(Name {
-            name: "Player".to_owned(),
-        })
-        .with(CombatStats {
-            max_hp: 30,
-            hp: 30,
-            defense: 2,
-            power: 5,
-        })
-        .build();
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
