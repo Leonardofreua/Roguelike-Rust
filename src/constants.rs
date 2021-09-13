@@ -1,6 +1,6 @@
 pub const MAP_WIDTH: usize = 80;
 pub const MAP_HEIGHT: usize = 50;
-pub const MAP_TOTAL_DIMENSION: usize = MAP_WIDTH*MAP_HEIGHT;
+pub const MAP_TOTAL_DIMENSION: usize = MAP_WIDTH * MAP_HEIGHT;
 pub const COORDINATE_X: i32 = 79;
 pub const COORDINATE_Y: i32 = 49;
 pub const MAX_ROOMS: i32 = 30;

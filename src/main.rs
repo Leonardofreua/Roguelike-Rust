@@ -1,53 +1,58 @@
+use rltk::{GameState, Point, Rltk, RGB};
 use specs::prelude::*;
-use rltk::{GameState, Rltk, RGB, Point};
 
 mod components;
 mod constants;
-mod player;
+mod damage_system;
+mod gamelog;
+mod gui;
 mod map;
-mod rect;
-mod visibility_system;
-mod monster_ai_system;
 mod map_indexing_system;
 mod melee_combat_system;
-mod damage_system;
-mod gui;
-mod gamelog;
+mod monster_ai_system;
+mod player;
+mod rect;
+mod visibility_system;
 
 pub use components::*;
 pub use constants::{COORDINATE_X, VISIBLE_TILES_RANGE};
-pub use map::{Map, TileType, draw_map};
-pub use rect::Rect;
-use player::player_input;
-use visibility_system::VisibilitySystem;
-use monster_ai_system::MonsterAI;
-use map_indexing_system::MapIndexingSystem;
-use melee_combat_system::MeleeCombatSystem;
 use damage_system::DamageSystem;
 use gamelog::GameLog;
+pub use map::{draw_map, Map, TileType};
+use map_indexing_system::MapIndexingSystem;
+use melee_combat_system::MeleeCombatSystem;
+use monster_ai_system::MonsterAI;
+use player::player_input;
+pub use rect::Rect;
+use visibility_system::VisibilitySystem;
 
 #[derive(PartialEq, Copy, Clone)]
-pub enum RunState { AwaitingInput, PreRun, PlayerTurn, MonsterTurn }
+pub enum RunState {
+    AwaitingInput,
+    PreRun,
+    PlayerTurn,
+    MonsterTurn,
+}
 
 pub struct State {
-    pub ecs: World
+    pub ecs: World,
 }
 
 impl State {
     fn run_systems(&mut self) {
-        let mut visibility = VisibilitySystem{};
+        let mut visibility = VisibilitySystem {};
         visibility.run_now(&self.ecs);
 
-        let mut mob = MonsterAI{};
+        let mut mob = MonsterAI {};
         mob.run_now(&self.ecs);
 
-        let mut mapindex = MapIndexingSystem{};
+        let mut mapindex = MapIndexingSystem {};
         mapindex.run_now(&self.ecs);
 
-        let mut melee_combat = MeleeCombatSystem{};
+        let mut melee_combat = MeleeCombatSystem {};
         melee_combat.run_now(&self.ecs);
 
-        let mut damage = DamageSystem{};
+        let mut damage = DamageSystem {};
         damage.run_now(&self.ecs);
 
         self.ecs.maintain();
@@ -55,7 +60,7 @@ impl State {
 }
 
 impl GameState for State {
-    fn tick(&mut self, ctx : &mut Rltk) {
+    fn tick(&mut self, ctx: &mut Rltk) {
         ctx.cls();
 
         let mut new_run_state;
@@ -142,44 +147,79 @@ fn main() -> rltk::BError {
         let roll = rng.roll_dice(1, 2);
 
         match roll {
-            1 => { glyph = rltk::to_cp437('g'); name = "Goblin".to_owned(); }
-            _ => { glyph = rltk::to_cp437('o'); name = "Orc".to_owned(); }
+            1 => {
+                glyph = rltk::to_cp437('g');
+                name = "Goblin".to_owned();
+            }
+            _ => {
+                glyph = rltk::to_cp437('o');
+                name = "Orc".to_owned();
+            }
         }
 
-        gs.ecs.create_entity()
+        gs.ecs
+            .create_entity()
             .with(Position { x, y })
-            .with(Renderable{
-                glyph: glyph,
+            .with(Renderable {
+                glyph,
                 fg: RGB::named(rltk::RED),
                 bg: RGB::named(rltk::BLACK),
             })
-            .with(Viewshed{ visible_tiles: Vec::new(), range: VISIBLE_TILES_RANGE, dirty: true })
-            .with(Monster{})
-            .with(Name{ name: format!("{} #{}", &name, i) })
-            .with(BlocksTile{})
-            .with(CombatStats{ max_hp: 16, hp: 16, defense: 1, power: 4 })
+            .with(Viewshed {
+                visible_tiles: Vec::new(),
+                range: VISIBLE_TILES_RANGE,
+                dirty: true,
+            })
+            .with(Monster {})
+            .with(Name {
+                name: format!("{} #{}", &name, i),
+            })
+            .with(BlocksTile {})
+            .with(CombatStats {
+                max_hp: 16,
+                hp: 16,
+                defense: 1,
+                power: 4,
+            })
             .build();
     }
 
-    let player_entity = gs.ecs
+    let player_entity = gs
+        .ecs
         .create_entity()
-        .with(Position { x: player_x, y: player_y })
+        .with(Position {
+            x: player_x,
+            y: player_y,
+        })
         .with(Renderable {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
         })
-        .with(Player{})
-        .with(Viewshed{ visible_tiles: Vec::new(), range: VISIBLE_TILES_RANGE, dirty: true })
-        .with(Name{ name: "Player".to_owned() })
-        .with(CombatStats{ max_hp: 30, hp: 30, defense: 2, power: 5 })
+        .with(Player {})
+        .with(Viewshed {
+            visible_tiles: Vec::new(),
+            range: VISIBLE_TILES_RANGE,
+            dirty: true,
+        })
+        .with(Name {
+            name: "Player".to_owned(),
+        })
+        .with(CombatStats {
+            max_hp: 30,
+            hp: 30,
+            defense: 2,
+            power: 5,
+        })
         .build();
 
     gs.ecs.insert(map);
     gs.ecs.insert(Point::new(player_x, player_y));
     gs.ecs.insert(player_entity);
     gs.ecs.insert(RunState::PreRun);
-    gs.ecs.insert(GameLog{ entries: vec!["Welcome to Rusty Roguelike".to_string()] });
+    gs.ecs.insert(GameLog {
+        entries: vec!["Welcome to Rusty Roguelike".to_string()],
+    });
 
     rltk::main_loop(context, gs)
 }
