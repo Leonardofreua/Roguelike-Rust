@@ -120,6 +120,8 @@ fn register_components(gs: &mut State) {
     gs.ecs.register::<BlocksTile>();
     gs.ecs.register::<CombatStats>();
     gs.ecs.register::<WantsToMelee>();
+    gs.ecs.register::<Item>();
+    gs.ecs.register::<Potion>();
     gs.ecs.register::<SufferDamage>();
 }
 

@@ -1,4 +1,7 @@
-use super::{BlocksTile, CombatStats, Monster, Name, Player, Position, Rect, Renderable, Viewshed};
+use super::{
+    BlocksTile, CombatStats, Item, Monster, Name, Player, Position, Potion, Rect, Renderable,
+    Viewshed,
+};
 use crate::constants::{MAP_WIDTH, VISIBLE_TILES_RANGE};
 use rltk::{RandomNumberGenerator, RGB};
 use specs::prelude::*;
@@ -33,32 +36,43 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
         .build()
 }
 
-/// Fills a room with stuff!
-pub fn spawn_room(ecs: &mut World, room: &Rect) {
-    let mut monster_spawn_points: Vec<usize> = Vec::new();
-    {
-        let mut rng = ecs.write_resource::<RandomNumberGenerator>();
-        let num_monsters = rng.roll_dice(1, MAX_MONSTERS + 2) - 3;
+fn build_spawn_points_by_max_amount(ecs: &mut World, room: &Rect, max_amount: i32) -> Vec<usize> {
+    let mut spawn_points: Vec<usize> = Vec::new();
+    let mut rng = ecs.write_resource::<RandomNumberGenerator>();
+    let num_artifacts = rng.roll_dice(1, max_amount + 2) - 3;
 
-        for _i in 0..num_monsters {
-            let mut added = false;
-            while !added {
-                let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
-                let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
-                let index = (y * MAP_WIDTH) + x;
-                if !monster_spawn_points.contains(&index) {
-                    monster_spawn_points.push(index);
-                    added = true;
-                }
+    for _i in 0..num_artifacts {
+        let mut added = false;
+        while !added {
+            let x = (room.x1 + rng.roll_dice(1, i32::abs(room.x2 - room.x1))) as usize;
+            let y = (room.y1 + rng.roll_dice(1, i32::abs(room.y2 - room.y1))) as usize;
+            let idx = (y * MAP_WIDTH) + x;
+            if !spawn_points.contains(&idx) {
+                spawn_points.push(idx);
+                added = true;
             }
         }
     }
+    spawn_points
+}
+
+/// Fills a room with stuff!
+pub fn spawn_room(ecs: &mut World, room: &Rect) {
+    let monster_spawn_points = build_spawn_points_by_max_amount(ecs, room, MAX_MONSTERS);
+    let item_spawn_points = build_spawn_points_by_max_amount(ecs, room, MAX_ITEMS);
 
     // Actually spawn the monsters
-    for index in monster_spawn_points.iter() {
-        let x = (*index % MAP_WIDTH) as i32;
-        let y = (*index / MAP_WIDTH) as i32;
-        random_monster(ecs, x, y);
+    for idx in monster_spawn_points.iter() {
+        let x = *idx % MAP_WIDTH;
+        let y = *idx / MAP_WIDTH;
+        random_monster(ecs, x as i32, y as i32);
+    }
+
+    // Actually spawn the potions
+    for idx in item_spawn_points.iter() {
+        let x = *idx % MAP_WIDTH;
+        let y = *idx / MAP_WIDTH;
+        health_potion(ecs, x as i32, y as i32);
     }
 }
 
@@ -107,5 +121,21 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
             defense: 1,
             power: 4,
         })
+        .build();
+}
+
+fn health_potion(ecs: &mut World, x: i32, y: i32) {
+    ecs.create_entity()
+        .with(Position { x, y })
+        .with(Renderable {
+            glyph: rltk::to_cp437('i'),
+            fg: RGB::named(rltk::MAGENTA),
+            bg: RGB::named(rltk::BLACK),
+        })
+        .with(Name {
+            name: "Health Potion".to_string(),
+        })
+        .with(Item {})
+        .with(Potion { heal_amount: 8 })
         .build();
 }
