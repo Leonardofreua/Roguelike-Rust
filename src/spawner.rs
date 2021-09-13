@@ -8,6 +8,9 @@ use specs::prelude::*;
 
 const MAX_MONSTERS: i32 = 4;
 const MAX_ITEMS: i32 = 2;
+const PLAYER_ORDER: i32 = 0;
+const MONSTER_ORDER: i32 = 1;
+const ITEM_ORDER: i32 = 2;
 
 /// Spawns the player and returns his/her entity object.
 pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
@@ -17,6 +20,7 @@ pub fn player(ecs: &mut World, x: i32, y: i32) -> Entity {
             glyph: rltk::to_cp437('@'),
             fg: RGB::named(rltk::YELLOW),
             bg: RGB::named(rltk::BLACK),
+            render_order: PLAYER_ORDER,
         })
         .with(Player {})
         .with(Viewshed {
@@ -104,6 +108,7 @@ fn monster<S: ToString>(ecs: &mut World, x: i32, y: i32, glyph: rltk::FontCharTy
             glyph,
             fg: RGB::named(rltk::RED),
             bg: RGB::named(rltk::BLACK),
+            render_order: MONSTER_ORDER,
         })
         .with(Viewshed {
             visible_tiles: Vec::new(),
@@ -131,6 +136,7 @@ fn health_potion(ecs: &mut World, x: i32, y: i32) {
             glyph: rltk::to_cp437('i'),
             fg: RGB::named(rltk::MAGENTA),
             bg: RGB::named(rltk::BLACK),
+            render_order: ITEM_ORDER,
         })
         .with(Name {
             name: "Health Potion".to_string(),

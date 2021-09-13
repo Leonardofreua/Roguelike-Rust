@@ -13,6 +13,7 @@ pub struct Renderable {
     pub glyph: FontCharType,
     pub fg: RGB,
     pub bg: RGB,
+    pub render_order: i32,
 }
 
 #[derive(Component)]
@@ -74,6 +75,11 @@ pub struct WantsToPickupItem {
 #[derive(Component, Debug)]
 pub struct WantsToDrinkPotion {
     pub potion: Entity,
+}
+
+#[derive(Component, Debug)]
+pub struct WantsToDropItem {
+    pub item: Entity,
 }
 
 #[derive(Component, Debug)]
